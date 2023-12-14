@@ -1,0 +1,75 @@
+---
+title: "Danish Kings exercise"
+author: "Kristian Krabbe"
+date: "2023-10-06"
+output: html_document
+---
+### 1. Opgave
+
+**Calculate the average length of the reign for all monarchs**
+a. You first need to know how to subset the relevant "Duration" column before you run a mean() on it.
+b. Are you getting an error that there are characters in your column? Coerce your data to numbers with
+as.numeric()
+c. Remember to handle NAs: mean(X, na.rm=TRUE)
+d. Want to do both tasks in one? Remember that you can cluster R functions: mean(as.numeric(X),
+na.rm=TRUE)
+```{r}
+library(tidyverse)
+read_csv("data/Dansk kongerække - Ark1.csv")
+
+Kings <- read_csv("data/Dansk kongerække - Ark1.csv")
+Kings <- Kings %>%
+  mutate(Regeringstid = Regeringslut - Regeringsstart)
+colnames(Kings)
+
+
+mean(Kings$Regeringstid,na.rm = T)
+```
+
+### 2. Opgave
+**How many kings enjoyed a longer than the average duration of reign?**
+a. Select kings' names and Duration columns with select()
+b. Filter() the kings dataset Duration > average_length and count the resulting rows with count()
+c. Use mutate() to create a new column AboveAverage with TRUE/FALSE response depending on
+whether the Duration is bigger or smaller than average_length
+d. Group the unique values in this new column with group_by() and then tally(). What is your result?
+
+```{r}
+Kings %>% 
+  select(Regent, Regeringstid) %>% 
+  filter(Regeringstid > 19.3) %>% 
+  count()  
+
+Kings %>%  
+mutate(OverGennemsnit = Regeringstid >19.3)
+```
+### 3. Opgave
+**Sort kings by reign duration in descending order. Which three ruled the longest?**
+
+```{r}
+Kings %>% 
+  arrange(desc(Regeringstid))
+```
+### 4. Opgave
+**How many days did the three longest-ruling monarchs rule?**
+a. Use mutate() to create a column called Days calculating the total number of days they ruled
+b. BONUS: consider transition year (with 366 days)
+
+```{r}
+Kings %>% 
+  mutate(Regeringsdage = Regeringstid * 365.25) %>% 
+  arrange(desc(Regeringsdage))
+```
+
+### 5. Opgave
+**How many Kristians/Christians or Frederiks were there among Danish kings?**
+a. Search in the Names column via grepl() or str_detect()
+b. Filter by this query and create a new table just with these kings.
+  i. more complex query with combined filter(x == str_subset(x, pattern)) for very advanced
+students
+
+```{r}
+Kings %>% 
+  str_detect(Christian, Frederik)
+```
+
