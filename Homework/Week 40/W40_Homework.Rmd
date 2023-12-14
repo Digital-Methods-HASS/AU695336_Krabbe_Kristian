@@ -1,0 +1,108 @@
+---
+title: "W40 Homework"
+author: "Kristian Krabbe"
+date: "2023-10-12"
+output: html_document
+---
+
+***3) Create Interactive Maps in R***
+
+Following the Leaflet tutorial, develop a mini-project where you harvest or create digital data of your own, and plot these in an interactive map.
+
+If using Rmarkdown, please post both the .rmd and the rendered .html files in your au##### repository. Submit here a *link* to your au##### repository in https://github.com/Digital-Methods-HASS which leads directly to the place where you have posted your .Rmd and .html files with the solutions.
+
+### Activating the libraries
+
+```{r}
+
+# Activate the libraries
+library(leaflet)
+library(htmlwidgets)
+
+library(tidyverse)
+library(googlesheets4)
+library(leaflet)
+gs4_deauth()
+```
+
+### Task 1 Create a Danish equivalent of AUSmap with esri layers
+
+```{r map, eval=TRUE}
+
+l_Dan <- leaflet() %>%    
+  setView(8.948, 56.128, zoom = 13)
+
+# Now, prepare to select backgrounds
+esri <- grep("^Esri", providers, value = TRUE)
+
+# Select backgrounds from among provider tiles. To view them the options, 
+# go to https://leaflet-extras.github.io/leaflet-providers/preview/
+for (provider in esri) {
+  l_Dan <- l_Dan %>% addProviderTiles(provider, group = provider)
+}
+
+### Map of Denmark
+
+DANMAP <- l_Dan %>%
+  addLayersControl(baseGroups = names(esri),
+                   options = layersControlOptions(collapsed = FALSE)) %>%
+  addMiniMap(tiles = esri[[1]], toggleDisplay = TRUE,
+             position = "bottomright") %>%
+  addMeasure(
+    position = "bottomleft",
+    primaryLengthUnit = "meters",
+    primaryAreaUnit = "sqmeters",
+    activeColor = "#3D535D",
+    completedColor = "#7D4479") %>% 
+  htmlwidgets::onRender("
+                        function(el, x) {
+                        var myMap = this;
+                        myMap.on('baselayerchange',
+                        function (e) {
+                        myMap.minimap.changeLayer(L.tileLayer.provider(e.name));
+                        })
+                        }") %>% 
+  addControl("", position = "topright")
+
+DANMAP
+
+########## ADD DATA TO LEAFLET
+
+# Read in a Google sheet
+places <- read_sheet("https://docs.google.com/spreadsheets/d/1PlxsPElZML8LZKyXbqdAYeQCDIvDps2McZx1cTVWSzI/edit#gid=124710918",
+                     col_types = "cccnncnc", range = "DigitalMethods")
+glimpse(places)
+
+# load the coordinates in the map and check: are any points missing? Why?
+leaflet() %>% 
+  addTiles() %>% 
+  addMarkers(lng = places$Longitude, 
+             lat = places$Latitude,
+             popup = places$Description)
+```
+
+### Task 3: Can you cluster the points in Leaflet? Google "clustering options in Leaflet"
+
+```{r}
+DANMAP %>% 
+  addMarkers(lng = places$Longitude, 
+             lat = places$Latitude,
+             popup = places$Description,
+             clusterOptions = markerClusterOptions())
+```
+
+
+
+### Task 4: Look at the map and consider what it is good for and what not.
+Ovenstående arbejde som udmyndede sig i visualiseret kortlægning af de forskellige punkter rundt om i Danmark som er indskrevet i datasættet/spreedsheetet, er langt hen ad vejen fordelagtitg. Dog vil jeg mene at der nogen mangler.
+Først og fremmest skaber kortlægningen et overblik over punkternes placeringer rent geografisk. Dette er en kvalitet som datasætte ikke indeholder, i og med at det er højst usandsynligt at nogen kan placerer alle punkterne udfra koordinater og stednavne. Dertil er det smart at nærliggende punkter bliver samlet, når man zoomer ud. Det giver et godt og overskueligt layout. 
+Dog indeholder denne visualiseret kortlægning af punkterne også nogen mangler. Fx er en skam at man ikke kan se navnet eller koordinaterne på de enkelte punkter. Altså mister kort-visualisering en del af sin funktionalitet, og bliver blot et visualisering.
+Dermed kan man samlet set sige at visualiseringen og datasættet er afhængig af hinanden for at opnå det optimale output.
+
+
+### Task 5: Find out how to display notes and classifications in the map.
+Vi har tidligere oppe i arbejdet tilføjet noter til de respektive punkter.
+
+Dette skete i task 3, hvor følgende linje blev tilføjet: "popup = places$Description".
+
+Man kan se punkternes tilhørende noter ved at klikke på punkterne på kortet.
