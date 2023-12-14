@@ -1,0 +1,111 @@
+---
+title: "Folketingvalg 1973-2022"
+author: "Kristian Krabbe"
+date: "2023-12-19"
+output: html_document
+---
+
+# Installing packages and libraries
+```{r libraries}
+library(tidyverse)
+library(ggplot2)
+```
+
+# Importing the dataset into R
+```{r}
+folketingsvalg <- read_csv("data/folketingsvalg.csv")
+ftv_clean <- na.omit(folketingsvalg)
+```
+By using na.omit, I remove the cells in my dataset where NA (not available) occurs.
+So my clean dataset is named ftv_clean (ftv = short for folketingsvalg)
+
+Then I use str() to inspect my dataset
+```{r}
+str(ftv_clean)
+```
+str() do it possible for me to see that my clean dataset have 208 observation of 3 varables, which is "Party", "Election_year" and "Procent"
+
+# Visualization of my dataset
+By plotting my whole dataset, it gives me at overview on how each parties' development of percentage of votes has been in the periode of 1973 until 2022. 
+I use the geom_line() to make the visualization.
+```{r}
+ftv_clean %>% 
+  ggplot(aes(x = Election_year,y = Procent))+
+  geom_line(aes(color = Party))+
+  labs(x = "Year", y = "precentage of votes", 
+       title = "Election results 1973-2022" )
+```
+
+* The party Kristeligt Folkeparti changes its name to Kristendemokraterne in 2003, but to make it easier, the party is simply called the Kristeligt Folkeparti throughout the entire dataset.
+
+# Plotting the parties related to 'Jordskredsvalget' in 1973
+First, I define the parties that are particularly relevant in relation to the 'Jordskredvalget' in 1973. These are the parties Centrum-Demokraterne, Fremskridtspartiet and Kristeligt Folkeparti.
+Additionally, I assign them a color that corresponds to their party color."
+
+Then I use ggplot() to make graph for the parties.
+```{r}
+parties_to_plot <- c("Centrum_Demokraterne", "Fremskridtspartiet", "Kristeligt_Folkeparti", 
+                     "Danmarks_Retsforbund", "Danmarks_Kommunistiske_Folkeparti")
+custom_colors <- c("Centrum_Demokraterne" = "purple", "Fremskridtspartiet" = "yellow", 
+                   "Kristeligt_Folkeparti" = "green", "Danmarks_Retsforbund" = "violet", 
+                   "Danmarks_Kommunistiske_Folkeparti" = "red")
+years_to_include <- c(1973, 1975, 1977, 1979, 1981, 1984)
+
+filtered_data <- ftv_clean %>%
+  filter(Party %in% parties_to_plot & Election_year %in% years_to_include)
+  
+ggplot(filtered_data, aes(x = Election_year,y = Procent)) +
+  geom_point(aes(color = Party)) +
+  geom_smooth()+
+  scale_color_manual(values = custom_colors)+
+  labs(title = "Development of the 'Jordskredsvalget'-parties",
+       x = "Election year",
+       y = "Precentage of votes")+
+  scale_x_continuous(breaks = years_to_include)
+```
+
+
+# The four old parties
+I do the same thing as before, just this time I will look at the four old/traditional parties Socialdemokratiet, Venstre, Det Radikale Venstre og Det Konservative Folkeparti.
+Again, I give the parties a color that represents their party's color
+I'm using ggplot() again to make the graph for the parties.
+```{r}
+parties_to_plot2 <- c("Socialdemokratiet", "Venstre", "Det_Radikale_Venstre", "Det_Konservative_Folkeparti")
+
+custom_colors <- c("Socialdemokratiet" = "red", "Venstre" = "blue", "Det_Radikale_Venstre" = "purple", "Det_Konservative_Folkeparti" = "green")
+
+filtered_data2 <- ftv_clean %>% filter(Party %in% parties_to_plot2)
+
+ggplot(filtered_data2, aes(x = Election_year, y = Procent)) +
+  geom_line(aes(color = Party)) +
+  scale_color_manual(values = custom_colors)+
+  labs(title = "Development of the four old parties",
+       x = "Year",
+       y = "Precentage of votes")
+```
+
+# Comparison of the average voting percentage for the right-wing and left-wing
+
+```{r}
+left_wing <- ftv_clean %>% 
+  filter(Party == "Socialdemokratiet" | Party == "Socialistisk_Folkeparti" | Party == "Endhedslisten" |
+           Party == "Alternativet" | Party == "Danmarks_Kommunistiske_Folkeparti" | 
+           Party == "Fælles_Kurs" | Party == "Venstresocialisterne")
+
+```
+
+```{r}
+right_wing <- ftv_clean %>% 
+  filter(Party == "Venstre" | Party == "Det_Konservative_Folkeparti" | Party == "Centrum_Demokratern" | 
+           Party == "Fremskridtspartiet" | Party == "Kristeligt_Folkeparti" | Party == "Danmarks_Retsforbund" | 
+           Party == "Dansk_Folkepart" | Party == "Liberal_Alliance" | Party == "Moderaterne" | 
+           Party == "Nye_Borgerlige" | Party == "Danmarksdemokraterne")
+```
+
+```{r}
+ggplot()+
+  geom_smooth(data = left_wing, aes(x = left_wing$Election_year, y = left_wing$Procent, color = "left_wing"))+
+  geom_smooth(data = right_wing, aes(x = right_wing$Election_year, y = right_wing$Procent, color = "right_wing"))+
+  labs(x = "Year", y = "Precentage of votes", title = "The average voting percentage for the right-wing and left-wing")
+```
+
